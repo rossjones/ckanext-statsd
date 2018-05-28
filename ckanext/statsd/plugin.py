@@ -13,12 +13,14 @@ class StatsdPlugin(p.SingletonPlugin):
     PREFIX = ""
     HOST = ""
     POST = ""
+    LOG_TIMES = True
 
     # IConfigurer
     def update_config(self, config):
         StatsdPlugin.PREFIX = config.get('ckanext.statsd.prefix', '')
         StatsdPlugin.HOST = config.get('ckanext.statsd.host', '')
-        StatsdPlugin.PORT = config.get('ckanext.statsd.prefix', 8125)
+        StatsdPlugin.PORT = config.get('ckanext.statsd.port', 8125)
+        StatsdPlugin.LOG_TIMES = toolkit.asbool(config.get('ckanext.statsd.logtimes', True))
 
         self.client =statsd.StatsClient(
             host=StatsdPlugin.HOST, port=StatsdPlugin.PORT,
@@ -26,7 +28,7 @@ class StatsdPlugin(p.SingletonPlugin):
         )
 
     def make_middleware(self, app, config):
-        if not StatsdPlugin.HOST:
+        if not StatsdPlugin.LOG_TIMES or not StatsdPlugin.HOST:
             return app
 
         application = StatsdTimingMiddleware(app, self.client)

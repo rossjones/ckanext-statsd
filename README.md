@@ -37,8 +37,13 @@ To install ckanext-statsd:
 ```
 ckanext.statsd.host = 10.0.2.2
 ckanext.statsd.port = 8125
-ckanext.prefix =
+ckanext.statsd.prefix =
+ckanext.statsd.logtimes = true
 ```
+
+If you wish to not send timing information, then set `ckanext.statsd.logtimes = false`
+
+
 
 5. Restart CKAN. For example if you've deployed CKAN with Apache on Ubuntu::
 
