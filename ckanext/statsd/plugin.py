@@ -28,7 +28,7 @@ class StatsdPlugin(p.SingletonPlugin):
         )
 
     def make_middleware(self, app, config):
-        if not StatsdPlugin.LOG_TIMES or not StatsdPlugin.HOST:
+        if (StatsdPlugin.LOG_TIMES == False) or not StatsdPlugin.HOST:
             return app
 
         application = StatsdTimingMiddleware(app, self.client)
