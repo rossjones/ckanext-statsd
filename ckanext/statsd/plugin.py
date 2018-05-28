@@ -1,13 +1,37 @@
-import ckan.plugins as plugins
+import statsd
+from wsgi_statsd import StatsdTimingMiddleware
+
+import ckan.plugins as p
 import ckan.plugins.toolkit as toolkit
 
 
-class StatsdPlugin(plugins.SingletonPlugin):
-    plugins.implements(plugins.IConfigurer)
+class StatsdPlugin(p.SingletonPlugin):
+    p.implements(p.IConfigurer)
+    p.implements(p.IMiddleware)
+    p.implements(p.IDomainObjectModification)
+
+    PREFIX = ""
+    HOST = ""
+    POST = ""
 
     # IConfigurer
+    def update_config(self, config):
+        StatsdPlugin.PREFIX = config.get('ckanext.statsd.prefix', '')
+        StatsdPlugin.HOST = config.get('ckanext.statsd.host', '')
+        StatsdPlugin.PORT = config.get('ckanext.statsd.prefix', 8125)
 
-    def update_config(self, config_):
-        toolkit.add_template_directory(config_, 'templates')
-        toolkit.add_public_directory(config_, 'public')
-        toolkit.add_resource('fanstatic', 'statsd')
+        self.client =statsd.StatsClient(
+            host=StatsdPlugin.HOST, port=StatsdPlugin.PORT,
+            prefix=StatsdPlugin.PREFIX, ipv6=False
+        )
+
+    def make_middleware(self, app, config):
+        if not StatsdPlugin.HOST:
+            return app
+
+        application = StatsdTimingMiddleware(app, self.client)
+        return application
+
+    def notify(self, entity, operation):
+        key = 'ckan.dataset.{}'.format(operation)
+        self.client.incr(key, count=1)
